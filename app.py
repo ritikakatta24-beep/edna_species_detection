@@ -129,7 +129,11 @@ def run_prediction(sequence: str, confidence_threshold: float, confusion_gap: fl
     paired = sorted(zip(class_names, probabilities), key=lambda x: x[1], reverse=True)
 
     top_candidates = [
-        CandidateSpecies(species=sp, confidence=round(float(prob), 4))
+        CandidateSpecies(
+            species=sp,
+            confidence=round(float(prob), 4),
+            species_details=SpeciesDetails(**species_descriptions_db[sp]) if sp in species_descriptions_db else None,
+        )
         for sp, prob in paired[:5]
         if prob > 0
     ]
@@ -165,11 +169,6 @@ class SequenceRequest(BaseModel):
     confusion_gap: float = 0.15        # if top species are within this gap of each other, flag as "confused"
 
 
-class CandidateSpecies(BaseModel):
-    species: str
-    confidence: float
-
-
 class SpeciesDetails(BaseModel):
     species: str
     common_name: str | None = None
@@ -181,6 +180,13 @@ class SpeciesDetails(BaseModel):
     conservation_status: str | None = None
     description: str | None = None
     sequence_count: int | None = None
+
+
+class CandidateSpecies(BaseModel):
+    species: str
+    confidence: float
+    species_details: SpeciesDetails | None = None
+
 
 
 class PredictionResponse(BaseModel):
