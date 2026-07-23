@@ -272,10 +272,7 @@ async def predict_species_batch_csv(
     confidence_threshold: float = 0.3,
     confusion_gap: float = 0.15,
 ):
-    """Upload a CSV file with columns: record_id, species, sequence
-    (this matches the format of the original training dataset -- no '>' needed).
-    'species' is treated as the known/actual label -- if present, each
-    prediction is checked against it and an overall accuracy is returned."""
+    
     raw_bytes = await file.read()
     text = raw_bytes.decode("utf-8", errors="ignore")
 
