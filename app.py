@@ -11,11 +11,14 @@ Usage:
 """
 
 import io
+import os
 import csv
+import json
 import numpy as np
 import joblib
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
+
 
 app = FastAPI(title="eDNA Species Prediction API")
 
@@ -26,6 +29,16 @@ model = bundle["model"]
 kmer_index = bundle["kmer_index"]
 K = bundle["k"]
 print(f"Model loaded. k={K}, vocabulary size={len(kmer_index)}")
+
+# ---- Load species description dataset ----
+species_descriptions_db = {}
+if os.path.exists("amphibia_species_descriptions.json"):
+    print("Loading species description dataset...")
+    with open("amphibia_species_descriptions.json", "r", encoding="utf-8") as f:
+        desc_list = json.load(f)
+        for item in desc_list:
+            species_descriptions_db[item["species"]] = item
+    print(f"Loaded descriptions for {len(species_descriptions_db)} species.")
 
 
 def sequence_to_kmer_vector(seq: str, k: int, kmer_index: dict) -> np.ndarray:
@@ -132,12 +145,17 @@ def run_prediction(sequence: str, confidence_threshold: float, confusion_gap: fl
     is_uncertain = (not is_confident) or is_confused
     candidates_to_return = top_candidates if is_uncertain else []
 
+    species_details = None
+    if is_confident and top_species in species_descriptions_db:
+        species_details = SpeciesDetails(**species_descriptions_db[top_species])
+
     return PredictionResponse(
         predicted_species=top_species if is_confident else "Unknown / no confident match",
         confidence=round(float(top_confidence), 4),
         is_confident=is_confident,
         is_confused=is_confused,
         top_candidates=candidates_to_return,
+        species_details=species_details,
     )
 
 
@@ -152,12 +170,26 @@ class CandidateSpecies(BaseModel):
     confidence: float
 
 
+class SpeciesDetails(BaseModel):
+    species: str
+    common_name: str | None = None
+    order: str | None = None
+    family: str | None = None
+    genus: str | None = None
+    habitat: str | None = None
+    geographic_range: str | None = None
+    conservation_status: str | None = None
+    description: str | None = None
+    sequence_count: int | None = None
+
+
 class PredictionResponse(BaseModel):
     predicted_species: str
     confidence: float
     is_confident: bool
     is_confused: bool
     top_candidates: list[CandidateSpecies]
+    species_details: SpeciesDetails | None = None
 
 
 class BatchResultItem(BaseModel):
@@ -295,3 +327,21 @@ async def predict_species_batch_csv(
         accuracy=accuracy,
         results=results,
     )
+
+
+@app.get("/species")
+def list_species():
+    """List all available species in the description database."""
+    return {
+        "total_species": len(species_descriptions_db),
+        "species_list": sorted(list(species_descriptions_db.keys())),
+    }
+
+
+@app.get("/species/{species_name}", response_model=SpeciesDetails)
+def get_species_details(species_name: str):
+    """Retrieve full description and metadata for a specific amphibian species."""
+    if species_name not in species_descriptions_db:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Species '{species_name}' not found in database.")
+    return SpeciesDetails(**species_descriptions_db[species_name])
