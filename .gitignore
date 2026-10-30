@@ -1,0 +1,4 @@
+__pycache__/
+species_cache.json
+.DS_Store
+*.mov
