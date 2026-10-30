@@ -1,0 +1,48 @@
+{
+  "sequences": 9380,
+  "species": 674,
+  "train": 7504,
+  "test": 1876,
+  "majority_class_baseline": 0.0166,
+  "accuracy": 0.9046,
+  "macro_f1": 0.8689,
+  "weighted_f1": 0.8936,
+  "top5_accuracy": 0.9686,
+  "genus_accuracy": 0.9664,
+  "confidence_tradeoff": [
+    {
+      "threshold": 0.3,
+      "coverage": 0.992,
+      "accuracy_on_covered": 0.9113
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.964,
+      "accuracy_on_covered": 0.9298
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.893,
+      "accuracy_on_covered": 0.9612
+    },
+    {
+      "threshold": 1.0,
+      "coverage": 0.756,
+      "accuracy_on_covered": 0.9852
+    }
+  ],
+  "accuracy_by_train_support": {
+    "1-4": {
+      "test_samples": 125,
+      "accuracy": 0.864
+    },
+    "5-9": {
+      "test_samples": 493,
+      "accuracy": 0.9026
+    },
+    "10+": {
+      "test_samples": 1258,
+      "accuracy": 0.9094
+    }
+  }
+}

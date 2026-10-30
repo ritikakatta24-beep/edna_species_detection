@@ -1,0 +1,7 @@
+species_cache.json
+amphibia_dataset.csv
+amphibia_species_descriptions.csv
+*.mov
+__pycache__/
+.venv/
+.DS_Store
